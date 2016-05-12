@@ -12,38 +12,79 @@
       factory(root, root.$);
     }
   })(function(__root__, $) {
-    $.fn.transform = function(transformation, x, y) {
-      var value;
-      switch (arguments.length) {
-        case 2:
-          value = $.isNumeric(x) ? transformation + "(" + x + "px)" : x ? transformation + "(" + x + ")" : '';
-          break;
-        case 3:
-          value = transformation + "(";
-          value += $.isNumeric(x) ? x + "px, " : (x || '') + ", ";
-          value += $.isNumeric(y) ? y + "px" : y || '';
-          value += ')';
+    var isNumeric, transformProperty;
+    isNumeric = $.isNumeric;
+    transformProperty = 'transform';
+    $(function() {
+      var el, hash, prop;
+      el = document.createElement('div');
+      if (el.style[transformProperty] == null) {
+        hash = {
+          mozTransform: '-moz-transform',
+          msTransform: '-ms-transform',
+          webkitTransform: '-webkit-transform',
+          WebkitTransform: '-webkit-transform'
+        };
+        for (prop in hash) {
+          if (!(el.style[prop] != null)) {
+            continue;
+          }
+          transformProperty = hash[prop];
+          return;
+        }
+      }
+    });
+    $.fn.transform = function(transformation) {
+      var allNumeric, allPresent, el, i, j, len, length, unit, value;
+      length = arguments.length;
+      if (length < 2) {
+        return this;
+      }
+      i = 0;
+      allNumeric = true;
+      allPresent = true;
+      while (++i < length && (allNumeric || allPresent)) {
+        if (!isNumeric(arguments[i])) {
+          allNumeric = false;
+        }
+        if (!arguments[i] && arguments[i] !== 0) {
+          allPresent = false;
+        }
+      }
+      if (allNumeric || allPresent) {
+        value = transformation + "(";
+        i = 0;
+        while (++i < length) {
+          unit = isNumeric(arguments[i]) ? 'px' : '';
+          value += "" + arguments[i] + unit + ((i + 1) < length ? ',' : '') + " ";
+        }
+        value += ')';
+      } else {
+        value = '';
       }
       if (value != null) {
-        this.css({
-          '-moz-transform': value,
-          '-ms-transform': value,
-          '-webkit-transform': value,
-          'transform': value
-        });
+        for (j = 0, len = this.length; j < len; j++) {
+          el = this[j];
+          el.style[transformProperty] = value;
+        }
       }
       return this;
     };
     $.fn.translate = function() {
-      var args;
-      args = ['translate'];
-      if (arguments.length > 0) {
-        args.push(arguments[0]);
+      if (arguments.length === 2) {
+        return this.transform('translate', arguments[0], arguments[1]);
+      } else if (arguments.length === 1) {
+        return this.transform('translate', arguments[0]);
       }
-      if (arguments.length > 1) {
-        args.push(arguments[1]);
+    };
+    $.fn.translate3d = function() {
+      if (arguments.length === 3) {
+        return this.transform('translate3d', arguments[0], arguments[1], arguments[2]);
+      } else if (arguments.length === 2) {
+        return this.transform('translate3d', arguments[0], arguments[1]);
+      } else if (arguments.length === 1) {
+        return this.transform('translate3d', arguments[0]);
       }
-      return this.transform.apply(this, args);
     };
   });
 

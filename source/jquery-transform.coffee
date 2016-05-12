@@ -1,30 +1,58 @@
-$.fn.transform = (transformation, x, y) ->
-  switch arguments.length
-    when 2
-      value = if $.isNumeric(x)
-        "#{transformation}(#{x}px)"
-      else if x
-        "#{transformation}(#{x})"
-      else
-        ''
-    when 3
-      value = "#{transformation}("
-      value += if $.isNumeric(x) then "#{x}px, " else "#{x or ''}, "
-      value += if $.isNumeric(y) then "#{y}px"   else (y or '')
-      value += ')'
+{isNumeric} = $
 
-  @css(
-    '-moz-transform':    value
-    '-ms-transform':     value
-    '-webkit-transform': value
-    'transform':         value
-  ) if value?
+transformProperty = 'transform'
+
+$ ->
+  el = document.createElement('div')
+  unless el.style[transformProperty]?
+    hash =
+      mozTransform:    '-moz-transform'
+      msTransform:     '-ms-transform'
+      webkitTransform: '-webkit-transform'
+      WebkitTransform: '-webkit-transform'
+    for prop of hash when el.style[prop]?
+      transformProperty = hash[prop]
+      return
+  return
+
+$.fn.transform = (transformation) ->
+  length     = arguments.length
+  return this if length < 2
+
+  i          = 0
+  allNumeric = true
+  allPresent = true
+
+  while ++i < length and (allNumeric or allPresent)
+    allNumeric = false if not isNumeric(arguments[i])
+    allPresent = false if not arguments[i] and arguments[i] isnt 0
+
+  if allNumeric or allPresent
+    value = "#{transformation}("
+    i     = 0
+    while ++i < length
+      unit   = if isNumeric(arguments[i]) then 'px' else ''
+      value += "#{arguments[i]}#{unit}#{if (i + 1) < length then ',' else ''} "
+    value += ')'
+  else
+    value = ''
+
+  if value?
+    el.style[transformProperty] = value for el in this
   this
 
 $.fn.translate = ->
-  args = ['translate']
-  args.push(arguments[0]) if arguments.length > 0
-  args.push(arguments[1]) if arguments.length > 1
-  @transform.apply(this, args)
+  if arguments.length is 2
+    @transform('translate', arguments[0], arguments[1])
+  else if arguments.length is 1
+    @transform('translate', arguments[0])
+
+$.fn.translate3d = ->
+  if arguments.length is 3
+    @transform('translate3d', arguments[0], arguments[1], arguments[2])
+  else if arguments.length is 2
+    @transform('translate3d', arguments[0], arguments[1])
+  else if arguments.length is 1
+    @transform('translate3d', arguments[0])
 
 # TODO matrix, rotate, scale, skew

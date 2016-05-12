@@ -26,7 +26,7 @@ gulp.task 'build', ->
   .pipe concat('jquery-transform.js')
   .pipe gulp.dest('build')
 
-gulp.task 'build-min', ->
+gulp.task 'build-min', ['build'], ->
   gulp.src('build/jquery-transform.js')
   .pipe uglify()
   .pipe rename('jquery-transform.min.js')
